@@ -1,0 +1,75 @@
+from typing import List, Dict, Optional
+from app.models import Gasto, GastoCreate, GastoUpdate, ResumenDeuda
+from app.repositories import GastoRepository
+from collections import defaultdict
+
+
+class GastoService:
+    def __init__(self, repository: GastoRepository):
+        self.repository = repository
+
+    def crear_gasto(self, gasto: GastoCreate) -> Gasto:
+        return self.repository.crear(gasto)
+
+    def obtener_gastos(self) -> List[Gasto]:
+        return self.repository.obtener_todos()
+
+    def obtener_gasto_por_id(self, gasto_id: int) -> Optional[Gasto]:
+        return self.repository.obtener_por_id(gasto_id)
+
+    def actualizar_gasto(self, gasto_id: int, gasto_update: GastoUpdate) -> Optional[Gasto]:
+        return self.repository.actualizar(gasto_id, gasto_update)
+
+    def eliminar_gasto(self, gasto_id: int) -> bool:
+        return self.repository.eliminar(gasto_id)
+
+    def calcular_resumen_deudas(self) -> Dict:
+        gastos = self.repository.obtener_todos()
+        
+        if not gastos:
+            return {
+                "total_gastado": 0,
+                "monto_por_persona": 0,
+                "num_personas": 0,
+                "personas": [],
+                "deudas": []
+            }
+        
+        personas = set(gasto.quien_pago for gasto in gastos)
+        num_personas = len(personas)
+        total_gastado = sum(gasto.monto for gasto in gastos)
+        monto_por_persona = total_gastado / num_personas
+        
+        balances = defaultdict(float)
+        for gasto in gastos:
+            balances[gasto.quien_pago] += gasto.monto
+        
+        deudas = []
+        for persona in personas:
+            balance = balances[persona] - monto_por_persona
+            if balance < -0.01:
+                deudas.append(ResumenDeuda(
+                    persona=persona,
+                    debe=abs(balance),
+                    descripcion=f"{persona} debe ${abs(balance):.2f}"
+                ))
+            elif balance > 0.01:
+                deudas.append(ResumenDeuda(
+                    persona=persona,
+                    debe=balance,
+                    descripcion=f"Le deben a {persona} ${balance:.2f}"
+                ))
+            else:
+                deudas.append(ResumenDeuda(
+                    persona=persona,
+                    debe=0,
+                    descripcion=f"{persona} está a mano"
+                ))
+        
+        return {
+            "total_gastado": round(total_gastado, 2),
+            "monto_por_persona": round(monto_por_persona, 2),
+            "num_personas": num_personas,
+            "personas": list(personas),
+            "deudas": deudas
+        }
