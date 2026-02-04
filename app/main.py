@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from app.controllers.gasto_controller import router as gasto_router
-from app.controllers.resumen_controller import router as resumen_router
 from app.controllers.auth_controller import router as auth_router
-from app.middlewares import setup_cors
+from app.crud_grupos.router import router as grupo_router
+from app.middlewares.cors import setup_cors
 
 app = FastAPI(
     title="API Gestor de Gastos Compartidos",
@@ -13,8 +12,7 @@ app = FastAPI(
 setup_cors(app)
 
 app.include_router(auth_router)
-app.include_router(gasto_router)
-app.include_router(resumen_router)
+app.include_router(grupo_router)
 
 
 @app.get("/", tags=["Root"])
