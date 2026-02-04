@@ -35,41 +35,27 @@ class GastoService:
                 "deudas": []
             }
         
-        personas = set(gasto.quien_pago for gasto in gastos)
-        num_personas = len(personas)
         total_gastado = sum(gasto.monto for gasto in gastos)
-        monto_por_persona = total_gastado / num_personas
-        
-        balances = defaultdict(float)
-        for gasto in gastos:
-            balances[gasto.quien_pago] += gasto.monto
         
         deudas = []
-        for persona in personas:
-            balance = balances[persona] - monto_por_persona
-            if balance < -0.01:
+        for gasto in gastos:
+            if gasto.tipo == "te_deben":
                 deudas.append(ResumenDeuda(
-                    persona=persona,
-                    debe=abs(balance),
-                    descripcion=f"{persona} debe ${abs(balance):.2f}"
-                ))
-            elif balance > 0.01:
-                deudas.append(ResumenDeuda(
-                    persona=persona,
-                    debe=balance,
-                    descripcion=f"Le deben a {persona} ${balance:.2f}"
+                    persona=gasto.quien_pago,
+                    debe=gasto.monto,
+                    descripcion=f"{gasto.quien_pago} te debe ${gasto.monto:.2f}"
                 ))
             else:
                 deudas.append(ResumenDeuda(
-                    persona=persona,
-                    debe=0,
-                    descripcion=f"{persona} está a mano"
+                    persona=gasto.quien_pago,
+                    debe=gasto.monto,
+                    descripcion=f"Tu debes a {gasto.quien_pago} ${gasto.monto:.2f}"
                 ))
         
         return {
             "total_gastado": round(total_gastado, 2),
-            "monto_por_persona": round(monto_por_persona, 2),
-            "num_personas": num_personas,
-            "personas": list(personas),
+            "monto_por_persona": 0,
+            "num_personas": len(set(g.quien_pago for g in gastos)),
+            "personas": list(set(g.quien_pago for g in gastos)),
             "deudas": deudas
         }

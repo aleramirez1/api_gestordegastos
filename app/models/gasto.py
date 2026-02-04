@@ -7,6 +7,7 @@ class GastoBase(BaseModel):
     monto: float = Field(..., gt=0)
     descripcion: str = Field(..., min_length=1)
     quien_pago: str = Field(..., min_length=1)
+    tipo: str = Field(default="te_deben")
 
 
 class GastoCreate(GastoBase):
@@ -17,6 +18,7 @@ class GastoUpdate(BaseModel):
     monto: Optional[float] = Field(None, gt=0)
     descripcion: Optional[str] = Field(None, min_length=1)
     quien_pago: Optional[str] = Field(None, min_length=1)
+    tipo: Optional[str] = None
 
 
 class Gasto(GastoBase):
