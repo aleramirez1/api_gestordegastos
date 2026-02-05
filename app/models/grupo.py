@@ -18,7 +18,7 @@ class GrupoBase(BaseModel):
 
 
 class GrupoCreate(GrupoBase):
-    pass
+    usuario_id: int
 
 
 class GrupoUpdate(BaseModel):
@@ -33,8 +33,13 @@ class GastoCreate(BaseModel):
     tipo: str = "te_deben"
 
 
+class GastoEdit(BaseModel):
+    monto: float
+
+
 class Grupo(GrupoBase):
     id: int
+    usuario_id: int
     fecha_creacion: datetime
     gastos: List[GastoGrupo] = []
 

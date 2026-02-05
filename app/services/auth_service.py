@@ -14,7 +14,7 @@ class AuthService:
         return hashlib.md5(data.encode()).hexdigest()
 
     def registrar(self, usuario: UsuarioCreate) -> Optional[UsuarioResponse]:
-        existente = self.repository.buscar_por_email(usuario.email)
+        existente = self.repository.buscar_por_nombre(usuario.nombre)
         if existente:
             return None
         
@@ -27,8 +27,8 @@ class AuthService:
             token=token
         )
 
-    def login(self, email: str, password: str) -> Optional[UsuarioResponse]:
-        usuario = self.repository.verificar_password(email, password)
+    def login(self, nombre: str, password: str) -> Optional[UsuarioResponse]:
+        usuario = self.repository.verificar_password(nombre, password)
         if not usuario:
             return None
         

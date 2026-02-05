@@ -12,7 +12,7 @@ class UsuarioCreate(UsuarioBase):
 
 
 class UsuarioLogin(BaseModel):
-    email: str
+    nombre: str
     password: str
 
 

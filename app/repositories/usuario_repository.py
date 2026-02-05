@@ -21,17 +21,17 @@ class UsuarioRepository:
         conn.close()
         return Usuario(id=usuario_id, nombre=usuario.nombre, email=usuario.email)
 
-    def buscar_por_email(self, email: str) -> Optional[dict]:
+    def buscar_por_nombre(self, nombre: str) -> Optional[dict]:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+        cursor.execute("SELECT * FROM usuarios WHERE nombre = %s", (nombre,))
         usuario = cursor.fetchone()
         cursor.close()
         conn.close()
         return usuario
 
-    def verificar_password(self, email: str, password: str) -> Optional[Usuario]:
-        usuario = self.buscar_por_email(email)
+    def verificar_password(self, nombre: str, password: str) -> Optional[Usuario]:
+        usuario = self.buscar_por_nombre(nombre)
         if usuario and usuario["password"] == self._hash_password(password):
             return Usuario(id=usuario["id"], nombre=usuario["nombre"], email=usuario["email"])
         return None

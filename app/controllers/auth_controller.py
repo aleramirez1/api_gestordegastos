@@ -14,14 +14,14 @@ def registrar(usuario: UsuarioCreate):
     if not resultado:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El email ya esta registrado"
+            detail="El nombre ya esta registrado"
         )
     return resultado
 
 
 @router.post("/login", response_model=UsuarioResponse)
 def login(credenciales: UsuarioLogin):
-    resultado = auth_service.login(credenciales.email, credenciales.password)
+    resultado = auth_service.login(credenciales.nombre, credenciales.password)
     if not resultado:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

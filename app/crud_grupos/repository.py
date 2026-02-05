@@ -1,14 +1,13 @@
 from typing import Optional, List
 from app.models.grupo import Grupo, GrupoCreate, GrupoUpdate, GastoGrupo, GastoCreate
 from app.database import get_connection
-from datetime import datetime
 
-#repositori
+
 class GrupoRepository:
     def crear(self, grupo: GrupoCreate) -> Grupo:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO grupos (nombre) VALUES (%s)", (grupo.nombre,))
+        cursor.execute("INSERT INTO grupos (nombre, usuario_id) VALUES (%s, %s)", (grupo.nombre, grupo.usuario_id))
         grupo_id = cursor.lastrowid
         for persona in grupo.personas:
             cursor.execute("INSERT INTO personas_grupo (grupo_id, nombre) VALUES (%s, %s)", (grupo_id, persona))
@@ -17,10 +16,10 @@ class GrupoRepository:
         conn.close()
         return self.obtener_por_id(grupo_id)
 
-    def obtener_todos(self) -> List[Grupo]:
+    def obtener_por_usuario(self, usuario_id: int) -> List[Grupo]:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM grupos")
+        cursor.execute("SELECT * FROM grupos WHERE usuario_id = %s", (usuario_id,))
         grupos_data = cursor.fetchall()
         grupos = []
         for g in grupos_data:
@@ -28,7 +27,7 @@ class GrupoRepository:
             personas = [p["nombre"] for p in cursor.fetchall()]
             cursor.execute("SELECT * FROM gastos WHERE grupo_id = %s", (g["id"],))
             gastos = [GastoGrupo(id=ga["id"], persona=ga["persona"], monto=float(ga["monto"]), descripcion=ga["descripcion"] or "", tipo=ga["tipo"], fecha=ga["fecha"]) for ga in cursor.fetchall()]
-            grupos.append(Grupo(id=g["id"], nombre=g["nombre"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos))
+            grupos.append(Grupo(id=g["id"], nombre=g["nombre"], usuario_id=g["usuario_id"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos))
         cursor.close()
         conn.close()
         return grupos
@@ -48,7 +47,7 @@ class GrupoRepository:
         gastos = [GastoGrupo(id=ga["id"], persona=ga["persona"], monto=float(ga["monto"]), descripcion=ga["descripcion"] or "", tipo=ga["tipo"], fecha=ga["fecha"]) for ga in cursor.fetchall()]
         cursor.close()
         conn.close()
-        return Grupo(id=g["id"], nombre=g["nombre"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos)
+        return Grupo(id=g["id"], nombre=g["nombre"], usuario_id=g["usuario_id"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos)
 
     def actualizar(self, grupo_id: int, grupo_update: GrupoUpdate) -> Optional[Grupo]:
         conn = get_connection()
@@ -105,6 +104,15 @@ class GrupoRepository:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM gastos WHERE id = %s AND grupo_id = %s", (gasto_id, grupo_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
+
+    def editar_gasto(self, grupo_id: int, gasto_id: int, nuevo_monto: float) -> Optional[Grupo]:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE gastos SET monto = %s WHERE id = %s AND grupo_id = %s", (nuevo_monto, gasto_id, grupo_id))
         conn.commit()
         cursor.close()
         conn.close()
