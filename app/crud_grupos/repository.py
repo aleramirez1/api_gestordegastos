@@ -3,7 +3,7 @@ from app.models.grupo import Grupo, GrupoCreate, GrupoUpdate, GastoGrupo, GastoC
 from app.database import get_connection
 from datetime import datetime
 
-
+#repositori
 class GrupoRepository:
     def crear(self, grupo: GrupoCreate) -> Grupo:
         conn = get_connection()
