@@ -1,92 +1,114 @@
 from typing import Optional, List
 from app.models.grupo import Grupo, GrupoCreate, GrupoUpdate, GastoGrupo, GastoCreate
+from app.database import get_connection
 from datetime import datetime
 
 
 class GrupoRepository:
-    def __init__(self):
-        self._grupos: List[dict] = []
-        self._counter = 0
-        self._gasto_counter = 0
-
     def crear(self, grupo: GrupoCreate) -> Grupo:
-        self._counter += 1
-        nuevo = {
-            "id": self._counter,
-            "nombre": grupo.nombre,
-            "personas": grupo.personas,
-            "fecha_creacion": datetime.now(),
-            "gastos": []
-        }
-        self._grupos.append(nuevo)
-        return Grupo(**nuevo)
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO grupos (nombre) VALUES (%s)", (grupo.nombre,))
+        grupo_id = cursor.lastrowid
+        for persona in grupo.personas:
+            cursor.execute("INSERT INTO personas_grupo (grupo_id, nombre) VALUES (%s, %s)", (grupo_id, persona))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
     def obtener_todos(self) -> List[Grupo]:
-        return [Grupo(**g) for g in self._grupos]
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM grupos")
+        grupos_data = cursor.fetchall()
+        grupos = []
+        for g in grupos_data:
+            cursor.execute("SELECT nombre FROM personas_grupo WHERE grupo_id = %s", (g["id"],))
+            personas = [p["nombre"] for p in cursor.fetchall()]
+            cursor.execute("SELECT * FROM gastos WHERE grupo_id = %s", (g["id"],))
+            gastos = [GastoGrupo(id=ga["id"], persona=ga["persona"], monto=float(ga["monto"]), descripcion=ga["descripcion"] or "", tipo=ga["tipo"], fecha=ga["fecha"]) for ga in cursor.fetchall()]
+            grupos.append(Grupo(id=g["id"], nombre=g["nombre"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos))
+        cursor.close()
+        conn.close()
+        return grupos
 
     def obtener_por_id(self, grupo_id: int) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM grupos WHERE id = %s", (grupo_id,))
+        g = cursor.fetchone()
+        if not g:
+            cursor.close()
+            conn.close()
+            return None
+        cursor.execute("SELECT nombre FROM personas_grupo WHERE grupo_id = %s", (grupo_id,))
+        personas = [p["nombre"] for p in cursor.fetchall()]
+        cursor.execute("SELECT * FROM gastos WHERE grupo_id = %s", (grupo_id,))
+        gastos = [GastoGrupo(id=ga["id"], persona=ga["persona"], monto=float(ga["monto"]), descripcion=ga["descripcion"] or "", tipo=ga["tipo"], fecha=ga["fecha"]) for ga in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        return Grupo(id=g["id"], nombre=g["nombre"], fecha_creacion=g["fecha_creacion"], personas=personas, gastos=gastos)
 
     def actualizar(self, grupo_id: int, grupo_update: GrupoUpdate) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                if grupo_update.nombre is not None:
-                    g["nombre"] = grupo_update.nombre
-                if grupo_update.personas is not None:
-                    g["personas"] = grupo_update.personas
-                return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        if grupo_update.nombre:
+            cursor.execute("UPDATE grupos SET nombre = %s WHERE id = %s", (grupo_update.nombre, grupo_id))
+        if grupo_update.personas is not None:
+            cursor.execute("DELETE FROM personas_grupo WHERE grupo_id = %s", (grupo_id,))
+            for persona in grupo_update.personas:
+                cursor.execute("INSERT INTO personas_grupo (grupo_id, nombre) VALUES (%s, %s)", (grupo_id, persona))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
     def eliminar(self, grupo_id: int) -> bool:
-        for i, g in enumerate(self._grupos):
-            if g["id"] == grupo_id:
-                self._grupos.pop(i)
-                return True
-        return False
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM grupos WHERE id = %s", (grupo_id,))
+        affected = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return affected > 0
 
     def agregar_persona(self, grupo_id: int, persona: str) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                if persona not in g["personas"]:
-                    g["personas"].append(persona)
-                return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO personas_grupo (grupo_id, nombre) VALUES (%s, %s)", (grupo_id, persona))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
     def eliminar_persona(self, grupo_id: int, persona: str) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                if persona in g["personas"]:
-                    g["personas"].remove(persona)
-                return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM personas_grupo WHERE grupo_id = %s AND nombre = %s", (grupo_id, persona))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
     def agregar_gasto(self, grupo_id: int, gasto: GastoCreate) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                self._gasto_counter += 1
-                nuevo_gasto = {
-                    "id": self._gasto_counter,
-                    "persona": gasto.persona,
-                    "monto": gasto.monto,
-                    "descripcion": gasto.descripcion,
-                    "tipo": gasto.tipo,
-                    "fecha": datetime.now()
-                }
-                g["gastos"].append(nuevo_gasto)
-                return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO gastos (grupo_id, persona, monto, descripcion, tipo) VALUES (%s, %s, %s, %s, %s)", (grupo_id, gasto.persona, gasto.monto, gasto.descripcion, gasto.tipo))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
     def eliminar_gasto(self, grupo_id: int, gasto_id: int) -> Optional[Grupo]:
-        for g in self._grupos:
-            if g["id"] == grupo_id:
-                for i, gasto in enumerate(g["gastos"]):
-                    if gasto["id"] == gasto_id:
-                        g["gastos"].pop(i)
-                        return Grupo(**g)
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM gastos WHERE id = %s AND grupo_id = %s", (gasto_id, grupo_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return self.obtener_por_id(grupo_id)
 
 
 grupo_repository = GrupoRepository()

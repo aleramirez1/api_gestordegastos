@@ -1,33 +1,34 @@
-from typing import Optional, List
+from typing import Optional
 from app.models.usuario import Usuario, UsuarioCreate
-from datetime import datetime
+from app.database import get_connection
 import hashlib
 
 
 class UsuarioRepository:
-    def __init__(self):
-        self._usuarios: List[dict] = []
-        self._counter = 0
-
     def _hash_password(self, password: str) -> str:
         return hashlib.sha256(password.encode()).hexdigest()
 
     def crear(self, usuario: UsuarioCreate) -> Usuario:
-        self._counter += 1
-        nuevo = {
-            "id": self._counter,
-            "nombre": usuario.nombre,
-            "email": usuario.email,
-            "password": self._hash_password(usuario.password)
-        }
-        self._usuarios.append(nuevo)
-        return Usuario(id=nuevo["id"], nombre=nuevo["nombre"], email=nuevo["email"])
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)",
+            (usuario.nombre, usuario.email, self._hash_password(usuario.password))
+        )
+        usuario_id = cursor.lastrowid
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return Usuario(id=usuario_id, nombre=usuario.nombre, email=usuario.email)
 
     def buscar_por_email(self, email: str) -> Optional[dict]:
-        for u in self._usuarios:
-            if u["email"] == email:
-                return u
-        return None
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+        usuario = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return usuario
 
     def verificar_password(self, email: str, password: str) -> Optional[Usuario]:
         usuario = self.buscar_por_email(email)

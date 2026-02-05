@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from app.models.grupo import Grupo, GrupoCreate, GrupoUpdate, GastoCreate
-from app.crud_grupos.get.obtener_todos import obtener_todos
-from app.crud_grupos.get.obtener_por_id import obtener_por_id
-from app.crud_grupos.post.crear import crear
-from app.crud_grupos.post.agregar_persona import agregar_persona
-from app.crud_grupos.post.agregar_gasto import agregar_gasto
-from app.crud_grupos.put.actualizar import actualizar
+from app.crud_grupos.read.obtener_todos import obtener_todos
+from app.crud_grupos.read.obtener_por_id import obtener_por_id
+from app.crud_grupos.create.crear import crear
+from app.crud_grupos.create.agregar_persona import agregar_persona
+from app.crud_grupos.create.agregar_gasto import agregar_gasto
+from app.crud_grupos.update.actualizar import actualizar
 from app.crud_grupos.delete.eliminar import eliminar
 from app.crud_grupos.delete.eliminar_persona import eliminar_persona
 from app.crud_grupos.delete.eliminar_gasto import eliminar_gasto
