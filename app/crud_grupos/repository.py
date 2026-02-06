@@ -2,7 +2,7 @@ from typing import Optional, List
 from app.models.grupo import Grupo, GrupoCreate, GrupoUpdate, GastoGrupo, GastoCreate
 from app.database import get_connection
 
-
+#subir
 class GrupoRepository:
     def crear(self, grupo: GrupoCreate) -> Grupo:
         conn = get_connection()
