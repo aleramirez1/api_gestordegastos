@@ -12,23 +12,21 @@ class UsuarioRepository:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)",
+            "INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)",
             (usuario.nombre, usuario.email, self._hash_password(usuario.password))
         )
         usuario_id = cursor.lastrowid
         conn.commit()
-        cursor.close()
         conn.close()
         return Usuario(id=usuario_id, nombre=usuario.nombre, email=usuario.email)
 
     def buscar_por_nombre(self, nombre: str) -> Optional[dict]:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios WHERE nombre = %s", (nombre,))
-        usuario = cursor.fetchone()
-        cursor.close()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE nombre = ?", (nombre,))
+        row = cursor.fetchone()
         conn.close()
-        return usuario
+        return dict(row) if row else None
 
     def verificar_password(self, nombre: str, password: str) -> Optional[Usuario]:
         usuario = self.buscar_por_nombre(nombre)

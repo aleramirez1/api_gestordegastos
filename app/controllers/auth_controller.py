@@ -12,10 +12,7 @@ auth_service = AuthService(usuario_repository)
 def registrar(usuario: UsuarioCreate):
     resultado = auth_service.registrar(usuario)
     if not resultado:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El nombre ya esta registrado"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El nombre ya esta registrado")
     return resultado
 
 
@@ -23,8 +20,5 @@ def registrar(usuario: UsuarioCreate):
 def login(credenciales: UsuarioLogin):
     resultado = auth_service.login(credenciales.nombre, credenciales.password)
     if not resultado:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales invalidas")
     return resultado

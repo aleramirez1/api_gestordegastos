@@ -17,25 +17,13 @@ class AuthService:
         existente = self.repository.buscar_por_nombre(usuario.nombre)
         if existente:
             return None
-        
         nuevo = self.repository.crear(usuario)
         token = self._generar_token(nuevo.id)
-        return UsuarioResponse(
-            id=nuevo.id,
-            nombre=nuevo.nombre,
-            email=nuevo.email,
-            token=token
-        )
+        return UsuarioResponse(id=nuevo.id, nombre=nuevo.nombre, email=nuevo.email, token=token)
 
     def login(self, nombre: str, password: str) -> Optional[UsuarioResponse]:
         usuario = self.repository.verificar_password(nombre, password)
         if not usuario:
             return None
-        
         token = self._generar_token(usuario.id)
-        return UsuarioResponse(
-            id=usuario.id,
-            nombre=usuario.nombre,
-            email=usuario.email,
-            token=token
-        )
+        return UsuarioResponse(id=usuario.id, nombre=usuario.nombre, email=usuario.email, token=token)

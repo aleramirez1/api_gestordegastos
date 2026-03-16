@@ -39,7 +39,7 @@ def eliminar_grupo(grupo_id: int):
 
 
 @router.post("/{grupo_id}/personas/{persona}", response_model=Grupo)
-def agregar_persona_grupo(grupo_id: int, persona: str):
+def agregar_persona(grupo_id: int, persona: str):
     grupo = grupo_repository.agregar_persona(grupo_id, persona)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
@@ -47,7 +47,7 @@ def agregar_persona_grupo(grupo_id: int, persona: str):
 
 
 @router.delete("/{grupo_id}/personas/{persona}", response_model=Grupo)
-def eliminar_persona_grupo(grupo_id: int, persona: str):
+def eliminar_persona(grupo_id: int, persona: str):
     grupo = grupo_repository.eliminar_persona(grupo_id, persona)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
@@ -55,7 +55,7 @@ def eliminar_persona_grupo(grupo_id: int, persona: str):
 
 
 @router.post("/{grupo_id}/gastos", response_model=Grupo)
-def agregar_gasto_grupo(grupo_id: int, gasto: GastoCreate):
+def agregar_gasto(grupo_id: int, gasto: GastoCreate):
     grupo = grupo_repository.agregar_gasto(grupo_id, gasto)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
@@ -63,7 +63,7 @@ def agregar_gasto_grupo(grupo_id: int, gasto: GastoCreate):
 
 
 @router.delete("/{grupo_id}/gastos/{gasto_id}", response_model=Grupo)
-def eliminar_gasto_grupo(grupo_id: int, gasto_id: int):
+def eliminar_gasto(grupo_id: int, gasto_id: int):
     grupo = grupo_repository.eliminar_gasto(grupo_id, gasto_id)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
@@ -71,7 +71,7 @@ def eliminar_gasto_grupo(grupo_id: int, gasto_id: int):
 
 
 @router.put("/{grupo_id}/gastos/{gasto_id}", response_model=Grupo)
-def editar_gasto_grupo(grupo_id: int, gasto_id: int, gasto: GastoEdit):
+def editar_gasto(grupo_id: int, gasto_id: int, gasto: GastoEdit):
     grupo = grupo_repository.editar_gasto(grupo_id, gasto_id, gasto.monto)
     if not grupo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
