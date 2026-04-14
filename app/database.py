@@ -19,6 +19,7 @@ def init_db():
             nombre TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL,
             password TEXT NOT NULL,
+            foto_perfil TEXT NOT NULL DEFAULT '',
             fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS grupos (
@@ -60,6 +61,11 @@ def init_db():
         conn.execute("ALTER TABLE grupos ADD COLUMN meta_ahorro REAL NOT NULL DEFAULT 0.0")
     if "personas_ya_recibieron" not in columnas:
         conn.execute("ALTER TABLE grupos ADD COLUMN personas_ya_recibieron TEXT NOT NULL DEFAULT '[]'")
+
+    cursor.execute("PRAGMA table_info(usuarios)")
+    columnas_usuarios = {row["name"] for row in cursor.fetchall()}
+    if "foto_perfil" not in columnas_usuarios:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT NOT NULL DEFAULT ''")
 
     conn.commit()
     conn.close()

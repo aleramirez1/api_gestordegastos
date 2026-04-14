@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class UsuarioBase(BaseModel):
@@ -18,6 +17,7 @@ class UsuarioLogin(BaseModel):
 
 class Usuario(UsuarioBase):
     id: int
+    foto_perfil: str = ""
 
     class Config:
         from_attributes = True
@@ -25,4 +25,10 @@ class Usuario(UsuarioBase):
 
 class UsuarioResponse(UsuarioBase):
     id: int
+    foto_perfil: str = ""
     token: str
+
+
+class UsuarioPerfilUpdate(BaseModel):
+    nombre: str = Field(..., min_length=2)
+    foto_perfil: str = ""
