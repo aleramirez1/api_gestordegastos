@@ -25,6 +25,9 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             usuario_id INTEGER NOT NULL,
+            is_ahorro INTEGER NOT NULL DEFAULT 0,
+            meta_ahorro REAL NOT NULL DEFAULT 0.0,
+            personas_ya_recibieron TEXT NOT NULL DEFAULT '[]',
             fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
         );
@@ -45,5 +48,18 @@ def init_db():
             FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE
         );
     """)
+
+    # Migration path for databases created before ahorro fields existed.
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(grupos)")
+    columnas = {row["name"] for row in cursor.fetchall()}
+
+    if "is_ahorro" not in columnas:
+        conn.execute("ALTER TABLE grupos ADD COLUMN is_ahorro INTEGER NOT NULL DEFAULT 0")
+    if "meta_ahorro" not in columnas:
+        conn.execute("ALTER TABLE grupos ADD COLUMN meta_ahorro REAL NOT NULL DEFAULT 0.0")
+    if "personas_ya_recibieron" not in columnas:
+        conn.execute("ALTER TABLE grupos ADD COLUMN personas_ya_recibieron TEXT NOT NULL DEFAULT '[]'")
+
     conn.commit()
     conn.close()
